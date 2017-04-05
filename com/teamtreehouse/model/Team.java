@@ -1,11 +1,13 @@
 package com.teamtreehouse.model;
 
 import java.util.*;
+import java.util.Collections;
 
 public class Team {
   private String mTeamName;
   private String mCoach;
   private List<Player> mPlayers; 
+  private List<Team> teams;
  
   public Team(String teamName, String coach) {
     mTeamName = teamName;
@@ -14,7 +16,11 @@ public class Team {
   }
   
   public void addPlayer(Player player) {
-    mPlayers.add(player);  
+    if (!mPlayers.contains(player)) {
+      mPlayers.add(player);
+    } else {
+      System.out.println("Player already on this team.");  
+    }
   }
   
   public void removePlayer(Player player) {
@@ -32,9 +38,4 @@ public class Team {
   public List<Player> getPlayers() {
     return mPlayers;  
   }
-  
-  
-  
-  
-  
 }

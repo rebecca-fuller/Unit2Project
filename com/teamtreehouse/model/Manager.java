@@ -1,4 +1,3 @@
-
 package com.teamtreehouse.model;
 
 import java.util.*;
@@ -14,6 +13,7 @@ public class Manager {
 
   private int choice;
   private int i;
+  private String playerInfo;
 
   private Team team;
   private String mTeamName;
@@ -32,7 +32,7 @@ public class Manager {
     menuMap.put("2.) add", "Add a player to an existing team");
     menuMap.put("3.) remove", "Remove a player from an existing team");
     menuMap.put("4.) height", "View a report of a team grouped by height");
-    menuMap.put("5.) balance", "League Balance Report");
+    menuMap.put("5.) experience report", "View report of experience for every team");
     menuMap.put("6.) roster", "Print a roster of all players on the team");
     menuMap.put("7.) quit", "Exit the program");
     
@@ -71,7 +71,7 @@ public class Manager {
       height();
       break;
     case 5:
-      balance();
+      experienceReport();
       break;
     case 6:
       roster();
@@ -86,29 +86,89 @@ public class Manager {
   //Pick a team
   private void pickTeam() {
     i = 1;
-      //loop through each team
-      for (Team team : teams) {
-        //get team info
-        mTeamName = team.getTeamName();
-        mCoach = team.getCoach();
-        //print team info
-        System.out.println(i + ".) " + mTeamName + " Coached by: " + mCoach);
-        i++;
-      }
-      //choose team
-      System.out.print("Choose a team: "); 
-      choice = scanner.nextInt();
-      choice -= 1;
-      team = teams.get(choice);
+    Collections.sort(teams, new TeamComparator());
+    //loop through each team
+    for (Team team : teams) {
+      //get team info
       mTeamName = team.getTeamName();
       mCoach = team.getCoach();
-      mTeamPlayers = team.getPlayers();
+      //print team info
+      System.out.println(i + ".) " + mTeamName + " Coached by: " + mCoach);
+      i++;
+    }
+    //choose team
+    System.out.print("Choose a team: "); 
+    choice = scanner.nextInt();
+    choice -= 1;
+    team = teams.get(choice);
+    mTeamName = team.getTeamName();
+    mCoach = team.getCoach();
+    mTeamPlayers = team.getPlayers();
   }
   
+  //Pick a player from a team
+  private void pickPlayerFromTeam(List<Player> teamPlayers) {
+    mTeamPlayers = teamPlayers;
+    i = 1;
+    Collections.sort(teamPlayers, new PlayerComparatorByLastName());
+    //loop through players in team
+    for (Player player : mTeamPlayers) {
+      //print player info
+      System.out.println(i + ".) " + playerInfoToString(player));
+      i++;
+    }
+    //choose player
+    System.out.print("Choose a player: "); 
+    choice = scanner.nextInt();
+    choice -= 1;
+    player = mTeamPlayers.get(choice);
+    mFirstName = player.getFirstName();
+    mLastName = player.getLastName();  
+  }
+  
+  //Pick a player from all unteamed players
+  private void pickPlayerFromUnteamed(List<Player> playersUnteamed) {
+    this.playersUnteamed = playersUnteamed;
+    Collections.sort(playersUnteamed, new PlayerComparatorByLastName());
+    i = 1;
+    //loop through all players
+    for (Player player : playersUnteamed) {
+      //get player info
+      mFirstName = player.getFirstName();
+      mLastName = player.getLastName();
+      mHeight = player.getHeightInInches();
+      mExperience = player.isPreviousExperience();
+      //print player info
+      System.out.println(i + ".) " + playerInfoToString(player));
+      i++;
+    }
+    //choose player
+    System.out.print("Choose a player: "); 
+    choice = scanner.nextInt();
+    choice -= 1;
+    player = playersUnteamed.get(choice);
+    mFirstName = player.getFirstName();
+    mLastName = player.getLastName(); 
+  }
+  
+  //get player info in string format
+  private String playerInfoToString(Player player) {
+    this.player = player;
+    mFirstName = player.getFirstName();
+    mLastName = player.getLastName();
+    mHeight = player.getHeightInInches();
+    mExperience = player.isPreviousExperience();
+    playerInfo = String.format("%s %s Height: %d inches Experience: %b", mFirstName, mLastName, 
+                               mHeight, mExperience);
+    return playerInfo;
+    
+  }
   
   //Create a team, only if there are less then 3 teams
   private void createTeam() {
     if (teams.size() < 3) {
+      System.out.printf("%n---------------%n");
+      System.out.println("-Create a Team-");
       System.out.print("Enter new team name: ");
       mTeamName = scanner.next();
       System.out.printf("Who will coach %s? ", mTeamName);
@@ -120,38 +180,29 @@ public class Manager {
     }
     choice();
   }
-  
+   
     //Add a player
   public void addPlayer() {
     if (teams.size() > 0) {
+      System.out.printf("%n----------------%n");
+      System.out.println("---Add a Player---");
       pickTeam();
+      mTeamPlayers = team.getPlayers();
       
-      i = 1;
-      //loop through all players
-      for (Player player : playersUnteamed) {
-        //get player info
-        mFirstName = player.getFirstName();
-        mLastName = player.getLastName();
-        mHeight = player.getHeightInInches();
-        mExperience = player.isPreviousExperience();
-        //print player info
-        System.out.println(i + ".) " + mLastName + ", " + mFirstName + " Height: " + mHeight + "in Experience: " + mExperience);
-        i++;
+      if (mTeamPlayers.size() < 11) {
+      
+        pickPlayerFromUnteamed(playersUnteamed);
+        
+        //add player to team
+        team.addPlayer(player);
+        mTeamPlayers = team.getPlayers();
+        //remove player from unteamed players
+        playersUnteamed.remove(player);
+        //print add player info
+        System.out.printf("%s %s added to %s%nTeam has %d players.%n", mFirstName, mLastName, mTeamName, mTeamPlayers.size());
+      } else {
+        System.out.println("Pick a different team. Team already has enough players.");  
       }
-      //choose player
-      System.out.print("Choose a player: "); 
-      choice = scanner.nextInt();
-      choice -= 1;
-      player = playersUnteamed.get(choice);
-      mFirstName = player.getFirstName();
-      mLastName = player.getLastName(); 
-      
-      //add player to team
-      team.addPlayer(player);
-      //remove player from unteamed players
-      playersUnteamed.remove(player);
-      //print add player info
-      System.out.printf("%s %s added to %s%n", mFirstName, mLastName, mTeamName);
     } else {
       System.out.println("No teams.Please create some teams first.");  
     }
@@ -161,27 +212,12 @@ public class Manager {
   //Remove a player
   public void removePlayer() {
     if (teams.size() > 0) {
+      System.out.printf("%n---------------%n");
+      System.out.println("Remove a Player");
+      
       pickTeam();
       
-      i = 1;
-      //loop through players in team
-      for (Player player : mTeamPlayers) {
-        //get player info
-        mFirstName = player.getFirstName();
-        mLastName = player.getLastName();
-        mHeight = player.getHeightInInches();
-        mExperience = player.isPreviousExperience();
-        //print player info
-        System.out.println(i + ".) " + mLastName + ", " + mFirstName + " Height: " + mHeight + "in Experience: " + mExperience);
-        i++;
-      }
-      //choose player
-      System.out.print("Choose a player: "); 
-      choice = scanner.nextInt();
-      choice -= 1;
-      player = mTeamPlayers.get(choice);
-      mFirstName = player.getFirstName();
-      mLastName = player.getLastName();
+      pickPlayerFromTeam(mTeamPlayers);
       
       //remove player from team
       team.removePlayer(player);
@@ -198,65 +234,90 @@ public class Manager {
   //Print team by height
   public void height() {
     if (teams.size() > 0) {
+      System.out.printf("%n---------------%n");
+      System.out.println("---By Height---");
+      
       pickTeam();
-      
-      //get team players
       mTeamPlayers = team.getPlayers();
-      //create team map
-      TreeMap teamHeight = new TreeMap();
-      //for each player
+      
+      List<Player> small = new ArrayList<>();
+		  List<Player> medium = new ArrayList<>();
+		  List<Player> large = new ArrayList<>();
+      List<Player> unplaced = new ArrayList<>();
+      
+      Collections.sort(mTeamPlayers, new PlayerComparatorByLastName());
       for (Player player : mTeamPlayers) {
-        //set player name
-        String mPlayerName = (player.getFirstName() + " " + player.getLastName());
-        //set player height
-        mHeight = player.getHeightInInches();  
-        //put into map
-        teamHeight.put(mHeight, mPlayerName);
+        int x = player.getHeightInInches();
+        if (x < 41) {
+          small.add(player);
+        } else if (40 < x && x < 47) {
+          medium.add(player);
+        } else if (46 < x) {
+          large.add(player);
+        } 
       }
       
-      Set set = teamHeight.entrySet();
+      System.out.printf("%n---------------%n");
+      System.out.printf("%s Coached by: %s", mTeamName, mCoach);
+      System.out.printf("%n---------------%n");
       
-      Iterator itr = set.iterator();
-      
-      while (itr.hasNext()) {
-        Map.Entry entry = (Map.Entry)itr.next();
-        System.out.print(entry.getValue() + " Height: ");
-        System.out.println(entry.getKey() + " inches");
+      if (small.size() > 0) {
+        System.out.printf("%n---------------%n");
+        System.out.println("Players Under 40 Inches");
+        System.out.printf("%n---------------%n");
+        for (Player player : small) {
+          System.out.println(playerInfoToString(player));  
+        }
       }
-                           
+      
+      if (medium.size() > 0) {
+        System.out.printf("%n---------------%n");
+        System.out.println("Players 41 to 46 Inches");
+        System.out.printf("%n---------------%n");
+        for (Player player : medium) {
+          System.out.println(playerInfoToString(player));  
+        }  
+      }
+      
+      if (large.size() > 0) {
+        System.out.printf("%n---------------%n");
+        System.out.println("Players Above 50 Inches");
+        System.out.printf("%n---------------%n");
+        for (Player player : large) {
+          System.out.println(playerInfoToString(player));  
+        }  
+      }
     } else {
-      System.out.println("No teams. Please create some teams.");   
+      System.out.println("No teams. Please create some teams.");  
     }
     choice();
   }
   
 
   //Print league balance by experience
-  private void balance() {
+  private void experienceReport() {
     if (teams.size() > 0) {
-      System.out.println("League Balance by Experience");
-      int experiencedInt = 0;
-      int inexperiencedInt = 0;
-      //Loop through each team
+      System.out.printf("%n---------------%n");
+      System.out.println("Experience Report");
+      
+      int experienced = 0;
+      int inexperienced = 0;
+      Collections.sort(teams, new TeamComparator());
       for (Team team : teams) {
+        System.out.printf("%n---------------%n");
+        System.out.printf("%s Coached by: %s%n", team.getTeamName(), team.getCoach());
         mTeamPlayers = team.getPlayers();
-        mTeamName = team.getTeamName();
-        //loop through players in team
         for (Player player : mTeamPlayers) {
-          mExperience = player.isPreviousExperience();
-          //see if player is experienced
-          //see if player is inexperienced
-          if(mExperience == true) {
-            experiencedInt++;    
-          } else if (mExperience == false) {
-            inexperiencedInt++;    
+          if (player.isPreviousExperience()) {
+            experienced++;  
+          } else {
+            inexperienced++;  
           }
         }
-      //print teams info
-      System.out.println(mTeamName);
-      System.out.println("Experienced: " + experiencedInt);
-      System.out.println("Inexperienced: " + inexperiencedInt);
-      } 
+        System.out.printf("Experienced players: %s%n", experienced);
+        System.out.printf("Inexperienced players: %s%n", inexperienced);
+      }
+      
     } else {
       System.out.println("No teams.Please create some teams first.");    
     }
@@ -266,23 +327,16 @@ public class Manager {
   //Roster of team
   private void roster() {
     if (teams.size() > 0) {
+      System.out.printf("%n---------------%n");
+      System.out.println("--Team Roster--");
+       
       pickTeam();
-      
-      //get team info
-      mTeamName = team.getTeamName();
-      mCoach = team.getCoach();
-      mTeamPlayers = team.getPlayers();
-      
-      //loop through players in team
+      System.out.printf("%n---------------%n");
+      System.out.printf("%s Coached by: %s", team.getTeamName(), team.getCoach());
+      System.out.printf("%n---------------%n");
+      Collections.sort(mTeamPlayers, new PlayerComparatorByLastName());
       for (Player player : mTeamPlayers) {
-        //get player info
-        mFirstName = player.getFirstName();
-        mLastName = player.getLastName();
-        mHeight = player.getHeightInInches();
-        mExperience = player.isPreviousExperience();
-        //print player info
-        System.out.println(mLastName + " " + mFirstName + " Height: " + mHeight + "inches Experience: " + mExperience);
-        i++;
+        System.out.println(playerInfoToString(player));  
       }
     } else {
       System.out.println("No teams.Please create some teams first.");    
